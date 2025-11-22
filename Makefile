@@ -1,14 +1,3 @@
-# INC=include
-# SRC=src
-# BUILD=build
-# APP=main
-# # g++ -I./include ./src/*.cc -o main
-# default:
-# 	g++ ./$(SRC)/$(APP).cc -o ./$(BUILD)/$(APP)
-
-# run:
-# 	./$(BUILD)/$(APP)
-
 INC=include
 SRC=src
 BUILD=build
