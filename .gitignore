@@ -26,8 +26,8 @@
 /bin/
 /obj/
 
-# CMake
-CMakeFiles/
-CMakeCache.txt
-cmake_install.cmake
-Makefile
+# # CMake
+# CMakeFiles/
+# CMakeCache.txt
+# cmake_install.cmake
+# Makefile
