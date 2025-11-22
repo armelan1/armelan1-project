@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include "Circle.hh"
+#include "Rectangle.hh"
 
 int main() 
 {
@@ -18,6 +19,10 @@ int main()
 
     std::cout << "Circumference: " << myCircleCircumference << std::endl;
     std::cout << "Area: " << myCircleArea << std::endl;
+
+    Rectangle myRectangle(2.0, 3.0);
+
+    std::cout << "Rectangle area: " << myRectangle.calcArea() << std::endl;
 
     return 0;
 }
