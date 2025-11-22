@@ -17,12 +17,12 @@ int main()
     double myCircleArea = myCircle.calcArea();
     double myCircleCircumference = myCircle.calcCircumference();
 
-    std::cout << "Circumference: " << myCircleCircumference << std::endl;
-    std::cout << "Area: " << myCircleArea << std::endl;
+    std::cout << "Circle Circumference: " << myCircleCircumference << std::endl;
+    std::cout << "Circle Area: " << myCircleArea << std::endl;
 
     Rectangle myRectangle(2.0, 3.0);
 
-    std::cout << "Rectangle area: " << myRectangle.calcArea() << std::endl;
+    std::cout << "Rectangle Area: " << myRectangle.calcArea() << std::endl;
 
     return 0;
 }
