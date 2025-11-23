@@ -14,3 +14,8 @@ double Circle::calcCircumference()
 {
     return calcPerimeter();
 }
+
+std::string Circle::name() const
+{
+    return "Circle";
+}

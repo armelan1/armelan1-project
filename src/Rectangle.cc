@@ -10,4 +10,7 @@ double Rectangle::calcPerimeter() const
     return 2 * (_length * _width);
 }
 
-double calcPerimeter();
+std::string Rectangle::name() const
+{
+    return "Rectangle";
+}

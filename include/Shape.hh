@@ -1,6 +1,7 @@
 #ifndef SHAPE_HH
 #define SHAPE_HH
 
+#include <string>
 
 class Shape
 {
@@ -10,6 +11,8 @@ class Shape
 
         virtual double calcPerimeter() const = 0;
         virtual double calcArea() const = 0;
+
+        virtual std::string name() const = 0;
 };
 
 #endif // SHAPE_HH

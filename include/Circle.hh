@@ -12,6 +12,7 @@ class Circle : public Shape
         double calcArea() const override;
         double calcPerimeter() const override;
         double calcCircumference();
+        std::string name() const override;
 
     private:
         double _radius;

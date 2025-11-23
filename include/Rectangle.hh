@@ -10,6 +10,7 @@ class Rectangle : public Shape
 
         double calcArea() const override;
         double calcPerimeter() const override;
+        std::string name() const override;
 
     private:
         double _length;
