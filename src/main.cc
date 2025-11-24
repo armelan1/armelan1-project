@@ -4,6 +4,38 @@
 #include "Rectangle.hh"
 #include <memory>
 
+namespace my_test
+{
+    class namespaceTestClass
+    {
+        public:
+            namespaceTestClass(int counter) : _counter(counter) {};
+
+            int getCounter()
+            {
+                return _counter;
+            }
+
+            void setCounter(int c)
+            {
+                _counter = c;
+            }
+
+            void operator++(int)
+            {
+                _counter++;
+            }
+        
+        private:
+            int _counter;
+    };
+
+    void printCounter(namespaceTestClass* inputClass)
+    {
+        std::cout << "counter: " << inputClass->getCounter() << std::endl;
+    }
+}
+
 int main() 
 {
     std::vector<int> myVector = {1,2,3,5,8,13,21};
@@ -52,5 +84,13 @@ int main()
     std::cout << "total area: " << calcTotalArea << std::endl;
     std::cout << "\n";
     
+    my_test::namespaceTestClass myNamespaceTestClass(0);
+    int trackCounter = myNamespaceTestClass.getCounter();
+    std::cout << "initial counter: " << trackCounter << std::endl;
+    std::cout << "incrementing counter" << std::endl;
+    my_test::printCounter(&myNamespaceTestClass);
+    myNamespaceTestClass++;
+    my_test::printCounter(&myNamespaceTestClass);
+
     return 0;
 }
