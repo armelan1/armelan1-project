@@ -99,6 +99,7 @@ int main()
     my_test::printCounter(&newClass);
     newClass++;
     my_test::printCounter(&newClass);
+    std::cout << "ending namespace test" << std::endl;
 
     return 0;
 }
