@@ -92,5 +92,13 @@ int main()
     myNamespaceTestClass++;
     my_test::printCounter(&myNamespaceTestClass);
 
+    my_test::namespaceTestClass newClass(1);
+    trackCounter = newClass.getCounter();
+    std::cout << "initial counter: " << trackCounter << std::endl;
+    std::cout << "incrementing counter" << std::endl;
+    my_test::printCounter(&newClass);
+    newClass++;
+    my_test::printCounter(&newClass);
+
     return 0;
 }
