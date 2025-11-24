@@ -101,6 +101,7 @@ int main()
     my_test::printCounter(&newClass);
     std::cout << "ending namespace test" << std::endl;
     double testDouble = 0;
+    testDouble += 4500.0;
     
     return 0;
 }
