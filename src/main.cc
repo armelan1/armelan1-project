@@ -100,7 +100,6 @@ int main()
     newClass++;
     my_test::printCounter(&newClass);
     std::cout << "ending namespace test" << std::endl;
-    std::cout << "changed my email!" << std::endl;
 
     return 0;
 }
