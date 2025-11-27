@@ -108,7 +108,9 @@ int main()
     ControlAllocation myCtrlAllocator(30.0, 300.0, 4);
     // double desiredControls[4] = {330.0, 30.0, 30.0, 30.0};
     // double desiredControls[4] = {330.0, 20.0, 30.0, 30.0};
-    double desiredControls[4] = {330.0, 40.0, 100.0, 100.0};
+    // double desiredControls[4] = {330.0, 40.0, 100.0, 100.0};
+    // double desiredControls[4] = {270.0, -30.0, 100.0, 100.0};
+    double desiredControls[4] = {280.0, -30.0, 100.0, 100.0};
     double allocatedControls[4];  // Stack allocation - deterministic!
 
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);

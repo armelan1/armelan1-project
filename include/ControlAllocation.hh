@@ -8,6 +8,25 @@ public:
         _minT(minT), _maxT(maxT), _numberInputs(numInputs) {};
     // ~ControlAllocation();
 
+    double getMinT(){
+        return _minT;
+    };
+    double getMaxT(){
+        return _maxT;
+    };
+    void setMinT(double minT){
+        _minT = minT;
+    };
+    void setMaxT(double maxT){
+        _maxT = maxT;
+    };
+    int getNumberInputs(){
+        return _numberInputs;
+    };
+    void setNumberInputs(int numInputs){
+        _numberInputs = numInputs;
+    };
+
     void allocateControls(const double* controlInputs, double* controlOutputs);
 
 private:
