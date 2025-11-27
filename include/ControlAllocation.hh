@@ -5,17 +5,40 @@ class ControlAllocation
 {
 public:
     ControlAllocation(double minT, double maxT, int numInputs) : 
-        _minT(minT), _maxT(maxT), numberInputs(numInputs) {};
+        _minT(minT), _maxT(maxT), _numberInputs(numInputs) {};
     ~ControlAllocation();
 
-    bool isInBounds(double* controlInputs);
-    double* shift(const double* controlInputs, int direction, double amount);
-    double* scale(const double* controlInputs);
-    double* allocateControls(const double* controlInputs);
+    void allocateControls(const double* controlInputs, double* controlOutputs);
 
 private:
-    double _minT, _maxT;
     int _numberInputs;
+    double _minT;
+    double _maxT;
+    
+    bool isInBounds(const double* controlInputs);
+    void shift(const double* controlInputs, double* controlOutputs, 
+               int direction, double amount);
+    void scale(const double* controlInputs, double* controlOutputs);
+    
+    double getMin(const double* array) {
+        double minVal = array[0];
+        for (int i = 1; i < _numberInputs; i++) {
+            if (array[i] < minVal) {
+                minVal = array[i];
+            }
+        }
+        return minVal;
+    }
+    
+    double getMax(const double* array) {
+        double maxVal = array[0];
+        for (int i = 1; i < _numberInputs; i++) {
+            if (array[i] > maxVal) {
+                maxVal = array[i];
+            }
+        }
+        return maxVal;
+    }
 };
 
 #endif // CONTROL_ALLOCATION_HH
