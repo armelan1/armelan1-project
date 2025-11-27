@@ -30,9 +30,9 @@ public:
     void allocateControls(const double* controlInputs, double* controlOutputs);
 
 private:
-    int _numberInputs;
     double _minT;
     double _maxT;
+    int _numberInputs;
     
     bool isInBounds(const double* controlInputs);
     void shift(const double* controlInputs, double* controlOutputs, 
