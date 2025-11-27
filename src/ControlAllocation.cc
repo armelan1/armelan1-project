@@ -1,5 +1,4 @@
 #include "ControlAllocation.hh"
-#include <algorithm>
 
 bool ControlAllocation::isInBounds(const double* controlInputs) {
     for (int i = 0; i < _numberInputs; i++) {
@@ -20,8 +19,8 @@ void ControlAllocation::shift(const double* controlInputs, double* controlOutput
 }
 
 void ControlAllocation::scale(const double* controlInputs, double* controlOutputs) {
-    double maxInput = *std::max_element(controlInputs, controlInputs + _numberInputs);
-    double minInput = *std::min_element(controlInputs, controlInputs + _numberInputs);
+    double maxInput = getMax(controlInputs);
+    double minInput = getMin(controlInputs);
     
     // Handle edge case where all inputs are the same
     if (maxInput == minInput) {
@@ -40,8 +39,8 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
 
 void ControlAllocation::allocateControls(const double* controlInputs, 
                                          double* controlOutputs) {
-    double maxInput = *std::max_element(controlInputs, controlInputs + _numberInputs);
-    double minInput = *std::min_element(controlInputs, controlInputs + _numberInputs);
+    double maxInput = getMax(controlInputs);
+    double minInput = getMin(controlInputs);
 
     if ((maxInput - minInput) > _maxT) {
         scale(controlInputs, controlOutputs);
@@ -56,7 +55,7 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         if (isInBounds(controlOutputs))
             return;
     } else if (maxInput > _maxT) {
-        shift(controlOutputs, controlOutputs, -1, maxInput - _maxT);
+        shift(controlInputs, controlOutputs, -1, maxInput - _maxT);
         if (isInBounds(controlOutputs))
             return;
         shift(controlInputs, controlOutputs, -1, (maxInput - _maxT) + (minInput - _minT));

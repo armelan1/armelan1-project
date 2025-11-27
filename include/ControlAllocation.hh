@@ -6,7 +6,7 @@ class ControlAllocation
 public:
     ControlAllocation(double minT, double maxT, int numInputs) : 
         _minT(minT), _maxT(maxT), _numberInputs(numInputs) {};
-    ~ControlAllocation();
+    // ~ControlAllocation();
 
     void allocateControls(const double* controlInputs, double* controlOutputs);
 
