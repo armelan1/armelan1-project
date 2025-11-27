@@ -16,3 +16,8 @@ default: $(BUILD)/$(APP)
 
 run:
 	./$(BUILD)/$(APP)
+
+clean:
+	rm -rf $(BUILD)
+	mkdir -p $(BUILD)
+

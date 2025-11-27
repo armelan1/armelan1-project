@@ -1,15 +1,18 @@
 #ifndef CIRCLE_HH
 #define CIRCLE_HH
 
-#define PI 3.14159
+#include "Shape.hh"
+#include <cmath>
 
-class Circle
+class Circle : public Shape
 {
     public:
-        Circle(double radius) : _radius(radius) {};
+        explicit Circle(double radius) : _radius(radius) {};
 
-        double calcArea();
+        double calcArea() const override;
+        double calcPerimeter() const override;
         double calcCircumference();
+        std::string name() const override;
 
     private:
         double _radius;
