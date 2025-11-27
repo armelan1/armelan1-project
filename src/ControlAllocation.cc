@@ -24,9 +24,8 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
     
     // Handle edge case where all inputs are the same
     if (maxInput == minInput) {
-        double targetValue = (_minT + _maxT) / 2.0;
         for (int i = 0; i < _numberInputs; i++) {
-            controlOutputs[i] = targetValue;
+            controlOutputs[i] = 0.0; // turn off lateral thrusters to conserve axial
         }
         return;
     }
