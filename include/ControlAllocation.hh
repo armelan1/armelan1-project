@@ -15,7 +15,7 @@ public:
 
 private:
     double _minT, _maxT;
-    int numberInputs;
+    int _numberInputs;
 };
 
 #endif // CONTROL_ALLOCATION_HH
