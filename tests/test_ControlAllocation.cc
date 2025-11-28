@@ -66,7 +66,7 @@ TEST(AllocateControls_WithNegatives_ProducesInBoundsOutputs)
 {
     ControlAllocation ca(kMinT, kMaxT, kNumInputs);
 
-    double inputs[kNumInputs]  = {-2.0, 0.5, 3.0, 4.0};
+    double inputs[kNumInputs]  = {-20.0, 100.5, 200.0, 140.0};
     double outputs[kNumInputs] = {};
 
     ca.allocateControls(inputs, outputs);
@@ -78,7 +78,7 @@ TEST(AllocateControls_WithValuesAboveMax_ProducesInBoundsOutputs)
 {
     ControlAllocation ca(kMinT, kMaxT, kNumInputs);
 
-    double inputs[kNumInputs]  = {0.0, 2.0, 5.5, 10.0};
+    double inputs[kNumInputs]  = {100.0, 200.0, 305.5, 300.0};
     double outputs[kNumInputs] = {};
 
     ca.allocateControls(inputs, outputs);
@@ -90,7 +90,7 @@ TEST(AllocateControls_LargeSpread_TriggersScalingIntoRange)
 {
     ControlAllocation ca(kMinT, kMaxT, kNumInputs);
 
-    double inputs[kNumInputs]  = {-10.0, 0.0, 5.0, 20.0};
+    double inputs[kNumInputs]  = {-100.0, 0.0, 500.0, 200.0};
     double outputs[kNumInputs] = {};
 
     ca.allocateControls(inputs, outputs);
@@ -100,6 +100,21 @@ TEST(AllocateControls_LargeSpread_TriggersScalingIntoRange)
     {
         double v = outputs[i];
         CHECK((v == 0.0) || (v >= kMinT && v <= kMaxT));
+    }
+}
+
+TEST(AllocateControls_AllSameInputs_ProducesZeroOutputs)
+{
+    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
+
+    double inputs[kNumInputs]  = {-100.0, -100.0, -100.0, -100.0};
+    double outputs[kNumInputs] = {};
+
+    ca.allocateControls(inputs, outputs);
+
+    for (int i = 0; i < kNumInputs; ++i)
+    {
+        CHECK_CLOSE(0.0, outputs[i], 1e-12);
     }
 }
 
