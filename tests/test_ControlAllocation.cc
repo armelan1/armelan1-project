@@ -7,7 +7,7 @@ namespace
     constexpr double kMaxT      = 300.0;
     constexpr int    kNumInputs = 4;
     constexpr int    kNumAxes   = 3;
-    constexpr double kTolerance = 1e-6;
+    constexpr double kTolerance = FLOATING_POINT_TOLERANCE;
 
     constexpr double kLx = 0.5;
     constexpr double kL  = 20.0;
@@ -61,6 +61,19 @@ namespace
             CHECK_CLOSE(mIn[i], mOut[i], kTolerance);
         }
     }
+
+    // TODO check Moment directions are equal.
+
+    // TODO check magnitude of thrust.
+    double thrustSum(const double* u, int n)
+    {
+        double sum = 0.0;
+        for (int i = 0; i < n; ++i)
+        {
+            sum += u[i];
+        }
+        return sum;
+    }
 }
 
 struct ControlAllocationFixture
@@ -98,7 +111,7 @@ TEST_FIXTURE(ControlAllocationFixture, Setters_UpdateParameters)
     CHECK_EQUAL(6, ca.getNumberInputs());
 }
 
-TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AlreadyInBounds_StaysInBounds)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AlreadyInBounds_MinIsZero_StaysInBounds)
 {
     inputs[0] = 0.0;
     inputs[1] = 30.0;
@@ -165,6 +178,59 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AllSameInputs_ProducesZe
     checkMomentsEqual(inputs, outputs);
 }
 
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AllInputsInDeadband)
+{
+    inputs[0] = 25.0;
+    inputs[1] = 20.0;
+    inputs[2] = 15.0;
+    inputs[3] = 10.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AllInputsNegativeInDeadband)
+{
+    inputs[0] = -25.0;
+    inputs[1] = -20.0;
+    inputs[2] = -15.0;
+    inputs[3] = -10.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InputInDeadband_CannotReduceThrust)
+{
+    inputs[0] = 25.0;
+    inputs[1] = 30.0;
+    inputs[2] = 35.0;
+    inputs[3] = 30.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InputInDeadband_CanReduceThrust)
+{
+    inputs[0] = 25.0;
+    inputs[1] = 130.0;
+    inputs[2] = 135.0;
+    inputs[3] = 140.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+    CHECK(thrustSum(outputs, kNumInputs) < thrustSum(inputs, kNumInputs));
+}
+
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroSucceed)
 {
     inputs[0] = 50.0;
@@ -177,19 +243,6 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZer
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
     checkMomentsEqual(inputs, outputs);
 }
-
-// TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroFail)
-// {
-//     inputs[0] = 50.0;
-//     inputs[1] = 100.0;
-//     inputs[2] = 150.0;
-//     inputs[3] = 200.0;
-
-//     ca.allocateControls(inputs, outputs);
-
-//     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
-//     checkMomentsEqual(inputs, outputs);
-// }
 
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToMinSucceed)
 {

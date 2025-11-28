@@ -1,6 +1,8 @@
 #ifndef CONTROL_ALLOCATION_HH
 #define CONTROL_ALLOCATION_HH
 
+#define FLOATING_POINT_TOLERANCE 1e-6
+
 class ControlAllocation
 {
 public:

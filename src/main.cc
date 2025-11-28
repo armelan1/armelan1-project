@@ -17,7 +17,11 @@ int main()
     // double desiredControls[4] = {280.0, 0.000000001, 40.0, 100.0};
     // double desiredControls[4] = {100.0, 200.0, 305.0, 300.0};
     // double desiredControls[4] = {100.0, 100.0, 100.0, 100.0};
-    double desiredControls[4] = {40.0, 40.0, 100.0, 330.0};
+    // double desiredControls[4] = {40.0, 40.0, 100.0, 330.0};
+
+    // double desiredControls[4] = {25.0, 20.0, 15.0, 10.0};
+    double desiredControls[4] = {25.0, 30.0, 35.0, 40.0};
+    // double desiredControls[4] = {25.0, 130.0, 135.0, 140.0};
     double allocatedControls[4];  // Stack allocation
 
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);

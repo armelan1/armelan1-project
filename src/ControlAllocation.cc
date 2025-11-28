@@ -51,7 +51,7 @@ void ControlAllocation::allocateControls(const double* controlInputs,
     }
     // check to see if we can shift the min to conserve thrust
     if (isInBounds(controlInputs)) {
-        if (minInput < 1e-6) {
+        if (minInput < FLOATING_POINT_TOLERANCE) {
             for (int i = 0; i < _numberInputs; i++) {
                 controlOutputs[i] = controlInputs[i];
             }
@@ -84,14 +84,24 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         shift(controlInputs, controlOutputs, 1, -(minInput - _minT));
         if (isInBounds(controlOutputs))
             return;
-    } else if (maxInput > _maxT) {
+    }else if (maxInput > _maxT) {
         shift(controlInputs, controlOutputs, -1, maxInput - _maxT);
         if (isInBounds(controlOutputs))
             return;
         shift(controlInputs, controlOutputs, -1, (maxInput - _maxT) + (minInput - _minT));
         if (isInBounds(controlOutputs))
             return;
+    }else { // input in deadband
+        // check if same logice as above cases (shift to zero shift to diff between minT and minInput)
+        // reduce thrust
+        shift(controlInputs, controlOutputs, -1, minInput);
+        if(isInBounds(controlOutputs))
+            return;
+        // increase thrust
+        shift(controlInputs, controlOutputs, 1, _minT - minInput);
+        if(isInBounds(controlOutputs))
+            return;
     }
-    // does this scale ever run?
-    scale(controlInputs, controlOutputs);
+    // // does this scale ever run?
+    // scale(controlInputs, controlOutputs);
 }
