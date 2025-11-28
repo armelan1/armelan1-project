@@ -1,259 +1,196 @@
 #include "UnitTest++/UnitTest++.h"
 #include "ControlAllocation.hh"
 
-// TODO add logic to compute original moment and resulting moment to compare after allocating controls
 namespace
 {
     constexpr double kMinT      = 30.0;
     constexpr double kMaxT      = 300.0;
     constexpr int    kNumInputs = 4;
+    constexpr int    kNumAxes   = 3;
+    constexpr double kTolerance = 1e-12;
 
-    bool isInBoundsTest(const double* u)
+    constexpr double kLx = 0.5;
+    constexpr double kL  = 20.0;
+    constexpr double kS  = 0.70710678118; // sin(45deg) or cos(45deg)
+
+    // Control effectiveness matrix B (3 x 4, row-major)
+    const double B[kNumAxes * kNumInputs] =
     {
-        for (int i = 0; i < kNumInputs; ++i)
-        {
-            double val = u[i];
+        //  u0      u1      u2      u3
+          kLx,    -kLx,    kLx,    -kLx,   // roll axis
+         -kL*kS, -kL*kS,  kL*kS,  kL*kS,   // pitch axis
+         -kL*kS,  kL*kS,  kL*kS, -kL*kS    // yaw axis
+    };
 
-            if (val < 0.0)
-                return false;
-
-            if (val > 0.0 && val < kMinT)
-                return false;
-
-            if (val > kMaxT)
-                return false;
-        }
-        return true;
-    }
-}
-
-namespace
-{
-    // rows x cols matrix A (row-major) times vector x (length cols)
-    // result y (length rows)
-    void matVecMultiply(const double* A,
-                        const double* x,
-                        double* y,
-                        int rows,
-                        int cols)
+    // Matrix-vector multiply: M = B * u
+    void matVecMultiply(const double* A, const double* x, double* y, int rows, int cols)
     {
         for (int r = 0; r < rows; ++r)
         {
             double sum = 0.0;
             for (int c = 0; c < cols; ++c)
             {
-                sum += A[r * cols + c] * x[c]; // row-major: A[r, c]
+                sum += A[r * cols + c] * x[c];
             }
             y[r] = sum;
         }
     }
-}
-
-namespace
-{
-    constexpr int numAxes   = 3;
-    constexpr int numInputs = 4;
-    constexpr double Lx = 0.5;
-    constexpr double L = 20.0;
-    constexpr double s = 0.70710678118; // sin(45deg) or cos(45deg)
-
-    // Control effectiveness matrix B (3 x 4, row-major)
-    // Each column is the moment contribution of one thruster.
-    const double B[numAxes * numInputs] =
+    // TODO refactor so that isInBounds only takes double array as input?
+    bool isInBounds(const double* u, int n, double minT, double maxT)
     {
-        //  u0    u1    u2    u3
-          Lx,  -Lx,   Lx,  -Lx,   // roll axis
-         -L*s, -L*s,  L*s,  L*s,   // pitch axis
-         -L*s,  L*s,  L*s, -L*s    // yaw axis (all equal)
-    };
+        for (int i = 0; i < n; ++i)
+        {
+            double val = u[i];
+            if (val < 0.0 || (val > 0.0 && val < minT) || val > maxT)
+                return false;
+        }
+        return true;
+    }
+
+    void checkMomentsEqual(const double* uIn, const double* uOut)
+    {
+        double mIn[kNumAxes]  = {};
+        double mOut[kNumAxes] = {};
+
+        matVecMultiply(B, uIn,  mIn,  kNumAxes, kNumInputs);
+        matVecMultiply(B, uOut, mOut, kNumAxes, kNumInputs);
+
+        for (int i = 0; i < kNumAxes; ++i)
+        {
+            CHECK_CLOSE(mIn[i], mOut[i], kTolerance);
+        }
+    }
 }
 
-
-TEST(Constructor_SetsParameters)
+struct ControlAllocationFixture
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
+    ControlAllocation ca;
+    double inputs[kNumInputs];
+    double outputs[kNumInputs];
 
-    CHECK_CLOSE(kMinT,      ca.getMinT(),      1e-12);
-    CHECK_CLOSE(kMaxT,      ca.getMaxT(),      1e-12);
+    ControlAllocationFixture()
+        : ca(kMinT, kMaxT, kNumInputs)
+        , inputs{}
+        , outputs{}
+    {
+    }
+};
+
+SUITE(ControlAllocationTests)
+{
+
+TEST_FIXTURE(ControlAllocationFixture, Constructor_SetsParameters)
+{
+    CHECK_CLOSE(kMinT, ca.getMinT(), kTolerance);
+    CHECK_CLOSE(kMaxT, ca.getMaxT(), kTolerance);
     CHECK_EQUAL(kNumInputs, ca.getNumberInputs());
 }
 
-TEST(Setters_UpdateParameters)
+TEST_FIXTURE(ControlAllocationFixture, Setters_UpdateParameters)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
     ca.setMinT(2.0);
     ca.setMaxT(6.0);
     ca.setNumberInputs(6);
 
-    CHECK_CLOSE(2.0, ca.getMinT(), 1e-12);
-    CHECK_CLOSE(6.0, ca.getMaxT(), 1e-12);
-    CHECK_EQUAL(6,   ca.getNumberInputs());
+    CHECK_CLOSE(2.0, ca.getMinT(), kTolerance);
+    CHECK_CLOSE(6.0, ca.getMaxT(), kTolerance);
+    CHECK_EQUAL(6, ca.getNumberInputs());
 }
 
-
-TEST(AllocateControls_AlreadyInBounds_StaysInBounds)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AlreadyInBounds_StaysInBounds)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-
-    double inputs[kNumInputs]  = {0.0, 30.0, 100.0, 200.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = 0.0;
+    inputs[1] = 30.0;
+    inputs[2] = 100.0;
+    inputs[3] = 200.0;
 
     ca.allocateControls(inputs, outputs);
 
-    CHECK(isInBoundsTest(outputs));
-
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
 }
 
-TEST(AllocateControls_WithNegatives_ProducesInBoundsOutputs)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithNegatives_ProducesInBoundsOutputs)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {-20.0, 100.5, 200.0, 140.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = -20.0;
+    inputs[1] = 100.5;
+    inputs[2] = 200.0;
+    inputs[3] = 140.0;
 
     ca.allocateControls(inputs, outputs);
 
-    CHECK(isInBoundsTest(outputs));
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
 }
 
-TEST(AllocateControls_WithValuesAboveMax_ProducesInBoundsOutputs)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_ProducesInBoundsOutputs)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {100.0, 200.0, 305.5, 300.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = 100.0;
+    inputs[1] = 200.0;
+    inputs[2] = 305.5;
+    inputs[3] = 300.0;
 
     ca.allocateControls(inputs, outputs);
 
-    CHECK(isInBoundsTest(outputs));
-
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
 }
 
-TEST(AllocateControls_LargeSpread_TriggersScalingIntoRange)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargeSpread_TriggersScalingIntoRange)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {-100.0, 0.0, 500.0, 200.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = -100.0;
+    inputs[1] = 0.0;
+    inputs[2] = 500.0;
+    inputs[3] = 200.0;
 
     ca.allocateControls(inputs, outputs);
 
-
-    for (int i = 0; i < kNumInputs; ++i)
-    {
-        double v = outputs[i];
-        CHECK((v == 0.0) || (v >= kMinT && v <= kMaxT)); //TODO check if v is close to zero?
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
 }
 
-TEST(AllocateControls_AllSameInputs_ProducesZeroOutputs)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AllSameInputs_ProducesZeroOutputs)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {-100.0, -100.0, -100.0, -100.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = -100.0;
+    inputs[1] = -100.0;
+    inputs[2] = -100.0;
+    inputs[3] = -100.0;
 
     ca.allocateControls(inputs, outputs);
 
     for (int i = 0; i < kNumInputs; ++i)
     {
-        CHECK_CLOSE(0.0, outputs[i], 1e-12);
+        CHECK_CLOSE(0.0, outputs[i], kTolerance);
     }
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    checkMomentsEqual(inputs, outputs);
 }
 
-TEST(AllocateControls_InBoundsInput_ShiftToZeroSucceed)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroSucceed)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {50.0, 100.0, 150.0, 200.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = 50.0;
+    inputs[1] = 100.0;
+    inputs[2] = 150.0;
+    inputs[3] = 200.0;
 
     ca.allocateControls(inputs, outputs);
 
-    CHECK(isInBoundsTest(outputs));
-
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
 }
 
-TEST(AllocateControls_InBoundsInput_ShiftToZeroFail)
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroFail)
 {
-    ControlAllocation ca(kMinT, kMaxT, kNumInputs);
-
-    double inputs[kNumInputs]  = {40.0, 50.0, 120.0, 160.0};
-    double outputs[kNumInputs] = {};
+    inputs[0] = 40.0;
+    inputs[1] = 50.0;
+    inputs[2] = 120.0;
+    inputs[3] = 160.0;
 
     ca.allocateControls(inputs, outputs);
 
-    CHECK(isInBoundsTest(outputs));
-
-    // Compute moments: M = B * u
-    double mIn[numAxes]  = {};
-    double mOut[numAxes] = {};
-
-    matVecMultiply(B, inputs,  mIn,  numAxes, numInputs);
-    matVecMultiply(B, outputs, mOut, numAxes, numInputs);
-
-    for (int i = 0; i < numAxes; ++i)
-    {
-        CHECK_CLOSE(mIn[i], mOut[i], 1e-12);
-    }
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
 }
+
+} // SUITE(ControlAllocationTests)
 
 int main()
 {
