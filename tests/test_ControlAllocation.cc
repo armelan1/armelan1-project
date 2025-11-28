@@ -64,13 +64,13 @@ namespace
 
     // TODO check Moment directions are equal.
 
-    // TODO check magnitude of thrust.
-    double thrustSum(const double* u, int n)
+    // TODO refactor to use the _numberInputs member variable?
+    double thrustSqSum(const double* u, int n)
     {
         double sum = 0.0;
         for (int i = 0; i < n; ++i)
         {
-            sum += u[i];
+            sum += u[i] * u[i];
         }
         return sum;
     }
@@ -208,8 +208,8 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InputInDeadband_CannotRe
 {
     inputs[0] = 25.0;
     inputs[1] = 30.0;
-    inputs[2] = 35.0;
-    inputs[3] = 30.0;
+    inputs[2] = 135.0;
+    inputs[3] = 130.0;
 
     ca.allocateControls(inputs, outputs);
 
@@ -228,7 +228,7 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InputInDeadband_CanReduc
 
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
     checkMomentsEqual(inputs, outputs);
-    CHECK(thrustSum(outputs, kNumInputs) < thrustSum(inputs, kNumInputs));
+    CHECK(thrustSqSum(outputs, kNumInputs) < thrustSqSum(inputs, kNumInputs));
 }
 
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroSucceed)
