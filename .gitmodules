@@ -1,0 +1,3 @@
+[submodule "extern/UnitTest++"]
+	path = extern/UnitTest++
+	url = https://github.com/unittest-cpp/unittest-cpp.git
