@@ -1,0 +1,17 @@
+stages:
+  - test
+
+test:
+  stage: test
+  image: gcc:latest
+  before_script:
+    - apt-get update && apt-get install -y lcov make git
+    - git submodule update --init --recursive
+  script:
+    - make coverage
+  coverage: '/lines\.*: (\d+\.\d+)%/'
+  artifacts:
+    paths:
+      - build/coverage_report/
+    expire_in: 30 days
+    when: always
