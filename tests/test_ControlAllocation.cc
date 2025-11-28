@@ -1,6 +1,7 @@
 #include "UnitTest++/UnitTest++.h"
 #include "ControlAllocation.hh"
 #include <cmath>
+#include <algorithm>
 
 namespace
 {   // TODO rename to ALL_CAPS constants?
@@ -453,7 +454,24 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw)
 
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
     checkMomentDirectionEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
 }
+
+// TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError)
+// {
+//     inputs[0] = 300.0;
+//     inputs[1] = 299.99;
+//     inputs[2] = 899.98;
+//     inputs[3] = 299.99;
+
+//     ca.allocateControls(inputs, outputs);
+
+//     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+//     checkMomentDirectionEqual(inputs, outputs);
+
+//     CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+// }
 
 } // SUITE(ControlAllocationTests)
 

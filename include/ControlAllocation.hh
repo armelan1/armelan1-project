@@ -1,7 +1,9 @@
 #ifndef CONTROL_ALLOCATION_HH
 #define CONTROL_ALLOCATION_HH
 
+// grab this from a common header file if it exists
 #define FLOATING_POINT_TOLERANCE 1e-6
+#define ROUNDING_TOLERANCE 1e-2 // check this against specs?
 
 class ControlAllocation
 {
@@ -35,11 +37,19 @@ private:
     double _minT;
     double _maxT;
     int _numberInputs;
+
+    enum class Direction : int {
+        POSITIVE = 1,
+        NEGATIVE = -1,
+        COPY = 0
+    };
     
     bool isInBounds(const double* controlInputs);
     void shift(const double* controlInputs, double* controlOutputs, 
-               int direction, double amount);
+               Direction direction, double amount);
     void scale(const double* controlInputs, double* controlOutputs);
+    void shiftAfterScale(double* controlOutputs);
+    void roundToZero(double* controlOutputs);
     
     double getMin(const double* array) {
         double minVal = array[0];

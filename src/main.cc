@@ -60,6 +60,11 @@ int main()
     // double desiredControls[4] = {25.0, 130.0, 135.0, 140.0};
 
     double desiredControls[4] = {300.0, 300.0, 900.0, 300.0};
+    std::cout << "\nDesired Controls: ";
+    for (int i = 0; i < 4; i++) {
+        std::cout << desiredControls[i] << " ";
+    }
+    std::cout << std::endl;
     double allocatedControls[4];  // Stack allocation
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);
     std::cout << "Allocated Controls: ";
@@ -71,8 +76,8 @@ int main()
     double maxRoll = kLx * 2 * 300.0; // max thrust per motor
     double maxPitch = 300.0 * kL * std::sqrt(2.0);
     double maxYaw = maxPitch;
-    std::cout << "Max Roll Moment: " << maxRoll << std::endl;
-    std::cout << "Max Pitch Moment: " << maxPitch << std::endl;
+    // std::cout << "Max Roll Moment: " << maxRoll << std::endl;
+    // std::cout << "Max Pitch Moment: " << maxPitch << std::endl;
     double moments[3] = {maxRoll, maxPitch, maxYaw};
     controlVectorBuilder(moments, desiredControls);
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);
