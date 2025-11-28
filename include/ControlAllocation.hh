@@ -49,7 +49,7 @@ private:
                Direction direction, double amount);
     void scale(const double* controlInputs, double* controlOutputs);
     void shiftAfterScale(double* controlOutputs);
-    void roundToZero(double* controlOutputs);
+    // void roundToZero(double* controlOutputs);
     
     double getMin(const double* array) {
         double minVal = array[0];

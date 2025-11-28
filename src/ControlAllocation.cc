@@ -29,13 +29,13 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
         controlOutputs[i] = normalized * (_maxT - _minT) + _minT;
     }
 }
-void ControlAllocation::roundToZero(double* controlOutputs) {
-    for (int i = 0; i < _numberInputs; i++) {
-        if (controlOutputs[i] < ROUNDING_TOLERANCE) {
-            controlOutputs[i] = 0.0;
-        }
-    }
-}
+// void ControlAllocation::roundToZero(double* controlOutputs) {
+//     for (int i = 0; i < _numberInputs; i++) {
+//         if (controlOutputs[i] < ROUNDING_TOLERANCE) {
+//             controlOutputs[i] = 0.0;
+//         }
+//     }
+// }
 void ControlAllocation::shiftAfterScale(double* controlOutputs) {
     double tempInputs[_numberInputs];
     shift(controlOutputs, tempInputs, Direction::COPY, 0.0); // copy outputs to tempInputs
