@@ -8,6 +8,10 @@ test:
     - apt-get update && apt-get install -y lcov make git
     - git submodule update --init --recursive
   script:
+    - echo "Building and running unit tests..."
+    - make test
+    - echo "Generating coverage report..."
+    - make coverage-clean
     - make coverage
   coverage: '/lines\.*: (\d+\.\d+)%/'
   artifacts:
