@@ -1,5 +1,6 @@
 #include "UnitTest++/UnitTest++.h"
 #include "ControlAllocation.hh"
+#include <cmath>
 
 namespace
 {   // TODO rename to ALL_CAPS constants?
@@ -62,7 +63,54 @@ namespace
         }
     }
 
-    // TODO check Moment directions are equal.
+    // Check if two moment vectors have the same direction (parallel, including zero vectors)
+    void checkMomentDirectionEqual(const double* uIn, const double* uOut)
+    {
+        double mIn[kNumAxes]  = {};
+        double mOut[kNumAxes] = {};
+
+        matVecMultiply(B, uIn,  mIn,  kNumAxes, kNumInputs);
+        matVecMultiply(B, uOut, mOut, kNumAxes, kNumInputs);
+
+        // Calculate magnitudes
+        double magIn = 0.0;
+        double magOut = 0.0;
+        for (int i = 0; i < kNumAxes; ++i)
+        {
+            magIn += mIn[i] * mIn[i];
+            magOut += mOut[i] * mOut[i];
+        }
+        magIn = std::sqrt(magIn);
+        magOut = std::sqrt(magOut);
+
+        // If both are near zero, they're trivially equal in direction
+        if (magIn < kTolerance && magOut < kTolerance)
+        {
+            return;
+        }
+
+        // If one is zero and the other isn't, directions are not equal
+        if (magIn < kTolerance || magOut < kTolerance)
+        {
+            CHECK(false && "One moment vector is zero while the other is not");
+            return;
+        }
+
+        // Normalize to unit vectors
+        double unitIn[kNumAxes];
+        double unitOut[kNumAxes];
+        for (int i = 0; i < kNumAxes; ++i)
+        {
+            unitIn[i] = mIn[i] / magIn;
+            unitOut[i] = mOut[i] / magOut;
+        }
+
+        // Check if unit vectors are equal (same direction)
+        for (int i = 0; i < kNumAxes; ++i)
+        {
+            CHECK_CLOSE(unitIn[i], unitOut[i], kTolerance);
+        }
+    }
 
     // TODO refactor to use the _numberInputs member variable?
     double thrustSqSum(const double* u, int n)
@@ -160,6 +208,46 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargeSpread_TriggersScal
     ca.allocateControls(inputs, outputs);
 
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_TriggersScaling)
+{
+    inputs[0] = 30.0;
+    inputs[1] = 200.0;
+    inputs[2] = 305.0;
+    inputs[3] = 300.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxShift_MinToZero_SecondMinToMinT)
+{
+    inputs[0] = 35.0;
+    inputs[1] = 5.0;
+    inputs[2] = 305.0;
+    inputs[3] = 300.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_NegativeMax_TriggersScaling)
+{
+    inputs[0] = -30.0;
+    inputs[1] = -200.0;
+    inputs[2] = -305.0;
+    inputs[3] = -300.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
 }
 
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_AllSameInputs_ProducesZeroOutputs)

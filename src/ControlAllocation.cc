@@ -24,16 +24,6 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
     
-    // scale only gets called after checking all posible shifts (nullspace wiggles) so all thrusters equal the same will never get called
-    // // Handle edge case where all inputs are the same
-    // if ((maxInput - minInput) < 1e-6) {
-    //     std::cout << "setting control vector to zero since all inputs are same" << std::endl;
-    //     for (int i = 0; i < _numberInputs; i++) {
-    //         controlOutputs[i] = 0.0; // turn off lateral thrusters to conserve axial
-    //     }
-    //     return;
-    // }
-    
     for (int i = 0; i < _numberInputs; i++) {
         double normalized = (controlInputs[i] - minInput) / (maxInput - minInput);
         controlOutputs[i] = normalized * (_maxT - _minT) + _minT;
@@ -45,13 +35,14 @@ void ControlAllocation::allocateControls(const double* controlInputs,
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
 
-    if ((maxInput - minInput) > _maxT) {
+    if ((maxInput - minInput) > _maxT) {  // maxInput - minInput < _maxT - _minT handled at end
         scale(controlInputs, controlOutputs);
         return;
     }
     // check to see if we can shift the min to conserve thrust
     if (isInBounds(controlInputs)) {
         if (minInput < FLOATING_POINT_TOLERANCE) {
+            // could call shift with zero amount to make code more readable?
             for (int i = 0; i < _numberInputs; i++) {
                 controlOutputs[i] = controlInputs[i];
             }
@@ -68,13 +59,6 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         if (isInBounds(controlOutputs)) {
             return;
         }
-
-        // // dead code??
-        // // if shifting doesn't work, revert and continue
-        // for (int i = 0; i < _numberInputs; i++) {
-        //     controlOutputs[i] = controlInputs[i];
-        // }
-        // return;
     }
 
     if (minInput < 0) {
@@ -92,7 +76,6 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         if (isInBounds(controlOutputs))
             return;
     }else { // input in deadband
-        // check if same logice as above cases (shift to zero shift to diff between minT and minInput)
         // reduce thrust
         shift(controlInputs, controlOutputs, -1, minInput);
         if(isInBounds(controlOutputs))
@@ -102,6 +85,6 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         if(isInBounds(controlOutputs))
             return;
     }
-    // // does this scale ever run?
-    // scale(controlInputs, controlOutputs);
+    // edge case maxInput - minInput < _maxT - _minT
+    scale(controlInputs, controlOutputs);
 }
