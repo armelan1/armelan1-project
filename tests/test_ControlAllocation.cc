@@ -23,7 +23,6 @@ namespace
          -kL*kS,  kL*kS,  kL*kS, -kL*kS    // yaw axis
     };
 
-    // TODO standardize the variable names Ax=b or M=Bu etc.
     // Matrix-vector multiply: M = B * u
     void matVecMultiply(const double* A, const double* x, double* y, int rows, int cols)
     {
@@ -37,7 +36,7 @@ namespace
             y[r] = sum;
         }
     }
-    // TODO refactor so that isInBounds only takes double array as input?
+
     bool isInBounds(const double* u, int n, double minT, double maxT)
     {
         for (int i = 0; i < n; ++i)
@@ -112,7 +111,6 @@ namespace
         }
     }
 
-    // TODO refactor to use the _numberInputs member variable?
     double thrustSqSum(const double* u, int n)
     {
         double sum = 0.0;
@@ -121,6 +119,38 @@ namespace
             sum += u[i] * u[i];
         }
         return sum;
+    }
+
+    void controlVectorBuilder(const double* mIn, double* f)
+    {
+        f[0] = 0;
+        f[1] = 0;
+        f[2] = 0;
+        f[3] = 0;
+        // Roll
+        if (mIn[0] < 0) {
+            f[1] += abs(mIn[0]) / (kLx * 2);
+            f[3] += abs(mIn[0]) / (kLx * 2);
+        }else if (mIn[0] > 0) {
+            f[0] += abs(mIn[0]) / (kLx * 2);
+            f[2] += abs(mIn[0]) / (kLx * 2);
+        }
+        // Pitch
+        if (mIn[1] < 0) {
+            f[0] += (abs(mIn[1]) / kL) * kS;
+            f[1] += (abs(mIn[1]) / kL) * kS;
+        }else if (mIn[1] > 0) {
+            f[2] += (abs(mIn[1]) / kL) * kS;
+            f[3] += (abs(mIn[1]) / kL) * kS;
+        }
+        // Yaw
+        if (mIn[2] < 0) {
+            f[0] += (abs(mIn[2]) / kL) * kS;
+            f[3] += (abs(mIn[2]) / kL) * kS;
+        }else if (mIn[2] > 0) {
+            f[1] += (abs(mIn[2]) / kL) * kS;
+            f[2] += (abs(mIn[2]) / kL) * kS;
+        }
     }
 }
 
@@ -212,7 +242,7 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargeSpread_TriggersScal
 }
 
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_TriggersScaling)
-{
+{   // edge case maxInput - minInput < _maxT - _minT
     inputs[0] = 30.0;
     inputs[1] = 200.0;
     inputs[2] = 305.0;
@@ -358,6 +388,19 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMinShift)
     checkMomentsEqual(inputs, outputs);
 }
 
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMinShift_TriggerScale)
+{
+    inputs[0] = -30.0;
+    inputs[1] = 40.0;
+    inputs[2] = -40.0;
+    inputs[3] = 240.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMaxShift)
 {
     inputs[0] = 40.0;
@@ -369,6 +412,47 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMaxShift)
 
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
     checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMaxShift_TriggerScale)
+{
+    inputs[0] = 40.0;
+    inputs[1] = 50.0;
+    inputs[2] = 40.0;
+    inputs[3] = 330.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargePositveVector)
+{
+    // inputs[0] = 40.0;
+    // inputs[1] = 50.0;
+    // inputs[2] = 40.0;
+    // inputs[3] = 330.0;
+    double m[3] = {10000.0, 10000.0, 10000.0};
+    controlVectorBuilder(m, inputs);
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+// TODO test if you can minmax normilize and then shift to zero
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw)
+{
+    inputs[0] = 300.0;
+    inputs[1] = 300.0;
+    inputs[2] = 900.0;
+    inputs[3] = 300.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
 }
 
 } // SUITE(ControlAllocationTests)

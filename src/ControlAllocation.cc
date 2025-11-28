@@ -29,23 +29,28 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
         controlOutputs[i] = normalized * (_maxT - _minT) + _minT;
     }
 }
-// TODO check if we can shift in bound command to reduce thrust.
+
+
+
 void ControlAllocation::allocateControls(const double* controlInputs, 
                                          double* controlOutputs) {
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
 
     if ((maxInput - minInput) > _maxT) {  // maxInput - minInput < _maxT - _minT handled at end
-        scale(controlInputs, controlOutputs);
+        scale(controlInputs, controlOutputs); // TODO check if you can shift after minmax normilization??
+        double tempInputs[_numberInputs];
+        shift(controlOutputs, tempInputs, 0, 0.0); // copy outputs to tempInputs
+        shift(tempInputs, controlOutputs, -1, _minT);
+        if (isInBounds(controlOutputs))
+            return;
+        shift(tempInputs, controlOutputs, 0, 0.0); // copy tempInputs to controlOutputs
         return;
     }
     // check to see if we can shift the min to conserve thrust
     if (isInBounds(controlInputs)) {
         if (minInput < FLOATING_POINT_TOLERANCE) {
-            // could call shift with zero amount to make code more readable?
-            for (int i = 0; i < _numberInputs; i++) {
-                controlOutputs[i] = controlInputs[i];
-            }
+            shift(controlInputs, controlOutputs, 0, 0.0); // copy inputs to outputs
             return; // already in bounds and minInput is zero
         }
 
@@ -87,4 +92,10 @@ void ControlAllocation::allocateControls(const double* controlInputs,
     }
     // edge case maxInput - minInput < _maxT - _minT
     scale(controlInputs, controlOutputs);
+    double tempInputs[_numberInputs];
+    shift(controlOutputs, tempInputs, 0, 0.0); // copy outputs to tempInputs
+    shift(tempInputs, controlOutputs, -1, _minT);
+    if (isInBounds(controlOutputs))
+        return;
+    shift(tempInputs, controlOutputs, 0, 0.0); // copy tempInputs to controlOutputs
 }
