@@ -56,7 +56,7 @@ coverage:
 	@$(MAKE) clean
 	@mkdir -p $(DIRS)
 	@$(MAKE) test CXXFLAGS="$(CXXFLAGS) $(COVERAGE_FLAGS)"
-	lcov --capture --directory $(BUILD) --output-file $(BUILD)/coverage.info --ignore-errors mismatch
+	lcov --capture --directory $(BUILD) --output-file $(BUILD)/coverage.info --ignore-errors mismatch,inconsistent
 	lcov --remove $(BUILD)/coverage.info '/usr/*' '*/extern/*' '*/tests/*' --output-file $(BUILD)/coverage.info
 	genhtml $(BUILD)/coverage.info --output-directory $(BUILD)/coverage_report
 	@echo "Coverage report generated in $(BUILD)/coverage_report/index.html"
