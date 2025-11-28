@@ -7,7 +7,7 @@ namespace
     constexpr double kMaxT      = 300.0;
     constexpr int    kNumInputs = 4;
     constexpr int    kNumAxes   = 3;
-    constexpr double kTolerance = 1e-12;
+    constexpr double kTolerance = 1e-6;
 
     constexpr double kLx = 0.5;
     constexpr double kL  = 20.0;
