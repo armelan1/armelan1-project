@@ -108,9 +108,9 @@ int main()
     // double desiredControls[4] = {330.0, 40.0, 100.0, 100.0};
     // double desiredControls[4] = {270.0, -30.0, 100.0, 100.0};
     // double desiredControls[4] = {280.0, -30.0, 100.0, 100.0};
-    // double desiredControls[4] = {280.0, 30.0, 100.0, 100.0};
+    double desiredControls[4] = {280.0, 30.0, 100.0, 100.0};
     // double desiredControls[4] = {280.0, 30.0, 40.0, 100.0};
-    double desiredControls[4] = {280.0, 0.000000001, 40.0, 100.0};
+    // double desiredControls[4] = {280.0, 0.000000001, 40.0, 100.0};
     double allocatedControls[4];  // Stack allocation
 
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);
