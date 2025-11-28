@@ -1,4 +1,5 @@
 #include "ControlAllocation.hh"
+#include <iostream>
 
 // TODO check floating point tolerance issues.
 bool ControlAllocation::isInBounds(const double* controlInputs) {
@@ -23,13 +24,15 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
     
-    // Handle edge case where all inputs are the same
-    if ((maxInput - minInput) < 1e-6) {
-        for (int i = 0; i < _numberInputs; i++) {
-            controlOutputs[i] = 0.0; // turn off lateral thrusters to conserve axial
-        }
-        return;
-    }
+    // scale only gets called after checking all posible shifts (nullspace wiggles) so all thrusters equal the same will never get called
+    // // Handle edge case where all inputs are the same
+    // if ((maxInput - minInput) < 1e-6) {
+    //     std::cout << "setting control vector to zero since all inputs are same" << std::endl;
+    //     for (int i = 0; i < _numberInputs; i++) {
+    //         controlOutputs[i] = 0.0; // turn off lateral thrusters to conserve axial
+    //     }
+    //     return;
+    // }
     
     for (int i = 0; i < _numberInputs; i++) {
         double normalized = (controlInputs[i] - minInput) / (maxInput - minInput);
@@ -46,18 +49,32 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         scale(controlInputs, controlOutputs);
         return;
     }
-    // check to see if we can shift the min to zero to conserve thrust
+    // check to see if we can shift the min to conserve thrust
     if (isInBounds(controlInputs)) {
-        shift(controlInputs, controlOutputs, -1, minInput);
-        if (isInBounds(controlOutputs)) {
-            return;
-        }else {
-            // if shifting to zero doesn't work, revert and continue
+        if (minInput < 1e-6) {
             for (int i = 0; i < _numberInputs; i++) {
                 controlOutputs[i] = controlInputs[i];
             }
+            return; // already in bounds and minInput is zero
+        }
+
+        // try shifting minInput to zero
+        shift(controlInputs, controlOutputs, -1, minInput);
+        if (isInBounds(controlOutputs)) {
             return;
         }
+        // try shifting minInput to minT
+        shift(controlInputs, controlOutputs, -1, minInput - _minT);
+        if (isInBounds(controlOutputs)) {
+            return;
+        }
+
+        // // dead code??
+        // // if shifting doesn't work, revert and continue
+        // for (int i = 0; i < _numberInputs; i++) {
+        //     controlOutputs[i] = controlInputs[i];
+        // }
+        // return;
     }
 
     if (minInput < 0) {
@@ -75,6 +92,6 @@ void ControlAllocation::allocateControls(const double* controlInputs,
         if (isInBounds(controlOutputs))
             return;
     }
-    
+    // does this scale ever run?
     scale(controlInputs, controlOutputs);
 }

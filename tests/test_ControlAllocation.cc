@@ -178,12 +178,51 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZer
     checkMomentsEqual(inputs, outputs);
 }
 
-TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroFail)
+// TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToZeroFail)
+// {
+//     inputs[0] = 50.0;
+//     inputs[1] = 100.0;
+//     inputs[2] = 150.0;
+//     inputs[3] = 200.0;
+
+//     ca.allocateControls(inputs, outputs);
+
+//     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+//     checkMomentsEqual(inputs, outputs);
+// }
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_InBoundsInput_ShiftToMinSucceed)
 {
-    inputs[0] = 40.0;
-    inputs[1] = 50.0;
+    inputs[0] = 50.0;
+    inputs[1] = 40.0;
     inputs[2] = 120.0;
     inputs[3] = 160.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMinShift)
+{
+    inputs[0] = -30.0;
+    inputs[1] = 40.0;
+    inputs[2] = -40.0;
+    inputs[3] = 160.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMaxShift)
+{
+    inputs[0] = 40.0;
+    inputs[1] = 40.0;
+    inputs[2] = 40.0;
+    inputs[3] = 330.0;
 
     ca.allocateControls(inputs, outputs);
 
