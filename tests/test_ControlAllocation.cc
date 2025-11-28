@@ -2,7 +2,7 @@
 #include "ControlAllocation.hh"
 
 namespace
-{
+{   // TODO rename to ALL_CAPS constants?
     constexpr double kMinT      = 30.0;
     constexpr double kMaxT      = 300.0;
     constexpr int    kNumInputs = 4;
@@ -22,6 +22,7 @@ namespace
          -kL*kS,  kL*kS,  kL*kS, -kL*kS    // yaw axis
     };
 
+    // TODO standardize the variable names Ax=b or M=Bu etc.
     // Matrix-vector multiply: M = B * u
     void matVecMultiply(const double* A, const double* x, double* y, int rows, int cols)
     {
