@@ -99,7 +99,7 @@ TEST(AllocateControls_LargeSpread_TriggersScalingIntoRange)
     for (int i = 0; i < kNumInputs; ++i)
     {
         double v = outputs[i];
-        CHECK((v == 0.0) || (v >= kMinT && v <= kMaxT));
+        CHECK((v == 0.0) || (v >= kMinT && v <= kMaxT)); //TODO check if v is close to zero?
     }
 }
 

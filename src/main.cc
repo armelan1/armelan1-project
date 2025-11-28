@@ -101,17 +101,17 @@ int main()
     newClass++;
     my_test::printCounter(&newClass);
     std::cout << "ending namespace test" << std::endl;
-    double testDouble = 0;
-    testDouble += 4500.0;
-    testDouble /= 2.0;
 
     ControlAllocation myCtrlAllocator(30.0, 300.0, 4);
     // double desiredControls[4] = {330.0, 30.0, 30.0, 30.0};
     // double desiredControls[4] = {330.0, 20.0, 30.0, 30.0};
     // double desiredControls[4] = {330.0, 40.0, 100.0, 100.0};
     // double desiredControls[4] = {270.0, -30.0, 100.0, 100.0};
-    double desiredControls[4] = {280.0, -30.0, 100.0, 100.0};
-    double allocatedControls[4];  // Stack allocation - deterministic!
+    // double desiredControls[4] = {280.0, -30.0, 100.0, 100.0};
+    // double desiredControls[4] = {280.0, 30.0, 100.0, 100.0};
+    // double desiredControls[4] = {280.0, 30.0, 40.0, 100.0};
+    double desiredControls[4] = {280.0, 0.000000001, 40.0, 100.0};
+    double allocatedControls[4];  // Stack allocation
 
     myCtrlAllocator.allocateControls(desiredControls, allocatedControls);
     std::cout << "Allocated Controls: ";
