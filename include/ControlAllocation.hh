@@ -31,7 +31,7 @@ public:
         _numberInputs = numInputs;
     };
 
-    void allocateControls(const double* controlInputs, double* controlOutputs);
+    void allocateControls(double* controlInputs, double* controlOutputs);
 
 private:
     double _minT;
@@ -44,12 +44,11 @@ private:
         COPY = 0
     };
     
-    bool isInBounds(const double* controlInputs);
+    bool isInBounds(double* controlInputs);
     void shift(const double* controlInputs, double* controlOutputs, 
                Direction direction, double amount);
     void scale(const double* controlInputs, double* controlOutputs);
     void shiftAfterScale(double* controlOutputs);
-    // void roundToZero(double* controlOutputs);
     
     double getMin(const double* array) {
         double minVal = array[0];

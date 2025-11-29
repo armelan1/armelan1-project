@@ -2,6 +2,7 @@
 #include "ControlAllocation.hh"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 namespace
 {   // TODO rename to ALL_CAPS constants?
@@ -43,7 +44,7 @@ namespace
         for (int i = 0; i < n; ++i)
         {
             double val = u[i];
-            if (val < 0.0 || (val > 0.0 && val < minT) || val > maxT)
+            if (val < -FLOATING_POINT_TOLERANCE || (val > FLOATING_POINT_TOLERANCE && val < minT) || val > maxT)
                 return false;
         }
         return true;
@@ -59,6 +60,7 @@ namespace
 
         for (int i = 0; i < kNumAxes; ++i)
         {
+            // std::cout << "mIn[" << i << "] = " << mIn[i] << ", mOut[" << i << "] = " << mOut[i] << std::endl;
             CHECK_CLOSE(mIn[i], mOut[i], kTolerance);
         }
     }
@@ -430,10 +432,6 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_DoubleMaxShift_TriggerSc
 
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargePositveVector)
 {
-    // inputs[0] = 40.0;
-    // inputs[1] = 50.0;
-    // inputs[2] = 40.0;
-    // inputs[3] = 330.0;
     double m[3] = {10000.0, 10000.0, 10000.0};
     controlVectorBuilder(m, inputs);
 
@@ -442,6 +440,18 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargePositveVector)
     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
     checkMomentDirectionEqual(inputs, outputs);
 }
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxAllAxes)
+{
+    double m[3] = {300.0, 8485.28, 8485.28};
+    controlVectorBuilder(m, inputs);
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+}
+
 // TODO test if you can minmax normilize and then shift to zero
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw)
 {
@@ -458,20 +468,123 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw)
     CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
 }
 
-// TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError)
-// {
-//     inputs[0] = 300.0;
-//     inputs[1] = 299.99;
-//     inputs[2] = 899.98;
-//     inputs[3] = 299.99;
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError)
+{
+    inputs[0] = 300.0;
+    inputs[1] = 299.99;
+    inputs[2] = 899.98;
+    inputs[3] = 299.99;
 
-//     ca.allocateControls(inputs, outputs);
+    ca.allocateControls(inputs, outputs);
 
-//     CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
-//     checkMomentDirectionEqual(inputs, outputs);
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
 
-//     CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
-// }
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointErrorMixed)
+{
+    inputs[0] = -300.0;
+    inputs[1] = 229.9;
+    inputs[2] = 1899.04;
+    inputs[3] = 119.21;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointTolerancePositive)
+{
+    inputs[0] = 0.0000001;
+    inputs[1] = 0.0000001;
+    inputs[2] = 0.0000001;
+    inputs[3] = 0.0000001;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointToleranceNegative)
+{
+    inputs[0] = -0.0000001;
+    inputs[1] = -0.0000001;
+    inputs[2] = -0.0000001;
+    inputs[3] = -0.0000001;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointToleranceMixedSign)
+{
+    inputs[0] = -0.0000001;
+    inputs[1] = 0.0000001;
+    inputs[2] = -0.0000001;
+    inputs[3] = 0.0000001;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentDirectionEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError_Shift)
+{
+    inputs[0] = -20.0;
+    inputs[1] = 229.9;
+    inputs[2] = 189.04;
+    inputs[3] = 119.21;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError_Shift_LargeNegativeInput)
+{
+    inputs[0] = -200.0;
+    inputs[1] = 29.9;
+    inputs[2] = 19.04;
+    inputs[3] = 19.21;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+
+    CHECK_CLOSE(0.0, *std::min_element(outputs, outputs + kNumInputs), FLOATING_POINT_TOLERANCE);
+}
+
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_MaxRollMaxPitchMaxYaw_FloatingPointError_Shift_Deadband)
+{
+    inputs[0] = 200.0;
+    inputs[1] = 29.9;
+    inputs[2] = 19.04;
+    inputs[3] = 19.21;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
 
 } // SUITE(ControlAllocationTests)
 

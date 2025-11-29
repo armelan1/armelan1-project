@@ -1,11 +1,14 @@
 #include "ControlAllocation.hh"
-#include <iostream>
+#include <cmath>
 
 // TODO check floating point tolerance issues.
-bool ControlAllocation::isInBounds(const double* controlInputs) {
+bool ControlAllocation::isInBounds(double* controlInputs) {
     for (int i = 0; i < _numberInputs; i++) {
-        if ((controlInputs[i] < 0) || 
-            ((controlInputs[i] < _minT) && (controlInputs[i] > 0)) || 
+        if (std::fabs(controlInputs[i]) < ROUNDING_TOLERANCE) {
+            controlInputs[i] = 0.0;
+        }
+        if ((controlInputs[i] < -FLOATING_POINT_TOLERANCE) || 
+            ((controlInputs[i] < _minT) && (controlInputs[i] > FLOATING_POINT_TOLERANCE)) || 
             controlInputs[i] > _maxT) {
             return false;
         }
@@ -29,41 +32,31 @@ void ControlAllocation::scale(const double* controlInputs, double* controlOutput
         controlOutputs[i] = normalized * (_maxT - _minT) + _minT;
     }
 }
-// void ControlAllocation::roundToZero(double* controlOutputs) {
-//     for (int i = 0; i < _numberInputs; i++) {
-//         if (controlOutputs[i] < ROUNDING_TOLERANCE) {
-//             controlOutputs[i] = 0.0;
-//         }
-//     }
-// }
+
 void ControlAllocation::shiftAfterScale(double* controlOutputs) {
     double tempInputs[_numberInputs];
     shift(controlOutputs, tempInputs, Direction::COPY, 0.0); // copy outputs to tempInputs
     shift(tempInputs, controlOutputs, Direction::NEGATIVE, _minT);
-    // roundToZero(controlOutputs);
     if (isInBounds(controlOutputs))
         return;
     shift(tempInputs, controlOutputs, Direction::COPY, 0.0); // copy tempInputs to controlOutputs
 }
 
-
-void ControlAllocation::allocateControls(const double* controlInputs, 
-                                         double* controlOutputs) {
+void ControlAllocation::allocateControls(double* controlInputs, double* controlOutputs) {
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
 
-    if ((maxInput - minInput) > _maxT) {  // maxInput - minInput < _maxT - _minT handled at end
+    if ((maxInput - minInput) > _maxT) {  // (maxInput - minInput) < (_maxT - _minT) handled at end of function
         scale(controlInputs, controlOutputs);
-        shiftAfterScale(controlOutputs);
+        shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
         return;
     }
     // check to see if we can shift the min to conserve thrust
     if (isInBounds(controlInputs)) {
-        if (minInput < FLOATING_POINT_TOLERANCE) {
+        if (minInput < FLOATING_POINT_TOLERANCE) { // already in bounds and minInput is zero
             shift(controlInputs, controlOutputs, Direction::COPY, 0.0); // copy inputs to outputs
-            return; // already in bounds and minInput is zero
+            return;
         }
-
         // try shifting minInput to zero
         shift(controlInputs, controlOutputs, Direction::NEGATIVE, minInput);
         if (isInBounds(controlOutputs)) {
@@ -102,5 +95,5 @@ void ControlAllocation::allocateControls(const double* controlInputs,
     }
     // edge case maxInput - minInput < _maxT - _minT
     scale(controlInputs, controlOutputs);
-    shiftAfterScale(controlOutputs);
+    shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
 }
