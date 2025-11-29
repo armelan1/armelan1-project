@@ -47,7 +47,7 @@ private:
     bool isInBounds(double* controlInputs);
     void shift(const double* controlInputs, double* controlOutputs, 
                Direction direction, double amount);
-    void scale(const double* controlInputs, double* controlOutputs);
+    void scale(const double* controlInputs, double* controlOutputs, double minInput, double maxInput);
     void shiftAfterScale(double* controlOutputs);
     
     double getMin(const double* array) {
