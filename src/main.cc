@@ -2,21 +2,21 @@
 #include "ControlAllocation.hh"
 #include <cmath>
 
-constexpr double kLx = 0.5;
-constexpr double kL  = 20.0;
-constexpr double kS  = 0.70710678118; // sin(45deg) or cos(45deg)
+constexpr double LX = 0.5;
+constexpr double L  = 20.0;
+constexpr double S  = 0.70710678118; // sin(45deg) or cos(45deg)
 
-constexpr int kNumInputs = 4;
-constexpr int kNumAxes = 3;
-constexpr double kTolerance = FLOATING_POINT_TOLERANCE;
+constexpr int NUM_INPUTS = 4;
+constexpr int NUM_AXES = 3;
+constexpr double TOLERANCE = FLOATING_POINT_TOLERANCE;
 
 // Control effectiveness matrix B (3 x 4, row-major)
 const double B[3 * 4] =
 {
     //  u0      u1      u2      u3
-        kLx,    -kLx,    kLx,    -kLx,   // roll axis
-        -kL*kS, -kL*kS,  kL*kS,  kL*kS,   // pitch axis
-        -kL*kS,  kL*kS,  kL*kS, -kL*kS    // yaw axis
+        LX,    -LX,    LX,    -LX,   // roll axis
+        -L*S, -L*S,  L*S,  L*S,   // pitch axis
+        -L*S,  L*S,  L*S, -L*S    // yaw axis
 };
 
 void controlVectorBuilder(const double* mIn, double* f)
@@ -27,27 +27,27 @@ void controlVectorBuilder(const double* mIn, double* f)
     f[3] = 0;
     // Roll
     if (mIn[0] < 0) {
-        f[1] += abs(mIn[0]) / (kLx * 2);
-        f[3] += abs(mIn[0]) / (kLx * 2);
+        f[1] += abs(mIn[0]) / (LX * 2);
+        f[3] += abs(mIn[0]) / (LX * 2);
     }else if (mIn[0] > 0) {
-        f[0] += abs(mIn[0]) / (kLx * 2);
-        f[2] += abs(mIn[0]) / (kLx * 2);
+        f[0] += abs(mIn[0]) / (LX * 2);
+        f[2] += abs(mIn[0]) / (LX * 2);
     }
     // Pitch
     if (mIn[1] < 0) {
-        f[0] += (abs(mIn[1]) / kL) * kS;
-        f[1] += (abs(mIn[1]) / kL) * kS;
+        f[0] += (abs(mIn[1]) / L) * S;
+        f[1] += (abs(mIn[1]) / L) * S;
     }else if (mIn[1] > 0) {
-        f[2] += (abs(mIn[1]) / kL) * kS;
-        f[3] += (abs(mIn[1]) / kL) * kS;
+        f[2] += (abs(mIn[1]) / L) * S;
+        f[3] += (abs(mIn[1]) / L) * S;
     }
     // Yaw
     if (mIn[2] < 0) {
-        f[0] += (abs(mIn[2]) / kL) * kS;
-        f[3] += (abs(mIn[2]) / kL) * kS;
+        f[0] += (abs(mIn[2]) / L) * S;
+        f[3] += (abs(mIn[2]) / L) * S;
     }else if (mIn[2] > 0) {
-        f[1] += (abs(mIn[2]) / kL) * kS;
-        f[2] += (abs(mIn[2]) / kL) * kS;
+        f[1] += (abs(mIn[2]) / L) * S;
+        f[2] += (abs(mIn[2]) / L) * S;
     }
 }
 
@@ -82,16 +82,16 @@ void checkMomentsEqual(const double* uIn, const double* uOut)
 // Check if two moment vectors have the same direction (parallel, including zero vectors)
 void checkMomentDirectionEqual(const double* uIn, const double* uOut)
 {
-    double mIn[kNumAxes]  = {};
-    double mOut[kNumAxes] = {};
+    double mIn[NUM_AXES]  = {};
+    double mOut[NUM_AXES] = {};
 
-    matVecMultiply(B, uIn,  mIn,  kNumAxes, kNumInputs);
-    matVecMultiply(B, uOut, mOut, kNumAxes, kNumInputs);
+    matVecMultiply(B, uIn,  mIn,  NUM_AXES, NUM_INPUTS);
+    matVecMultiply(B, uOut, mOut, NUM_AXES, NUM_INPUTS);
 
     // Calculate magnitudes
     double magIn = 0.0;
     double magOut = 0.0;
-    for (int i = 0; i < kNumAxes; ++i)
+    for (int i = 0; i < NUM_AXES; ++i)
     {
         magIn += mIn[i] * mIn[i];
         magOut += mOut[i] * mOut[i];
@@ -100,29 +100,29 @@ void checkMomentDirectionEqual(const double* uIn, const double* uOut)
     magOut = std::sqrt(magOut);
 
     // If both are near zero, they're trivially equal in direction
-    if (magIn < kTolerance && magOut < kTolerance)
+    if (magIn < TOLERANCE && magOut < TOLERANCE)
     {
         return;
     }
 
     // If one is zero and the other isn't, directions are not equal
-    if (magIn < kTolerance || magOut < kTolerance)
+    if (magIn < TOLERANCE || magOut < TOLERANCE)
     {
         std::cout << "One moment vector is zero while the other is not" << std::endl;
         return;
     }
 
     // Normalize to unit vectors
-    double unitIn[kNumAxes];
-    double unitOut[kNumAxes];
-    for (int i = 0; i < kNumAxes; ++i)
+    double unitIn[NUM_AXES];
+    double unitOut[NUM_AXES];
+    for (int i = 0; i < NUM_AXES; ++i)
     {
         unitIn[i] = mIn[i] / magIn;
         unitOut[i] = mOut[i] / magOut;
     }
 
     // Check if unit vectors are equal (same direction)
-    for (int i = 0; i < kNumAxes; ++i)
+    for (int i = 0; i < NUM_AXES; ++i)
     {
         std::cout << "unitIn[" << i << "] = " << unitIn[i] << ", unitOut[" << i << "] = " << unitOut[i] << std::endl;
     }
@@ -168,8 +168,8 @@ int main()
     checkMomentDirectionEqual(desiredControls, allocatedControls);
     std::cout << "\n\n";
 
-    double maxRoll = kLx * 2 * 300.0; // max thrust per motor
-    double maxPitch = 300.0 * kL * std::sqrt(2.0);
+    double maxRoll = LX * 2 * 300.0; // max thrust per motor
+    double maxPitch = 300.0 * L * std::sqrt(2.0);
     double maxYaw = maxPitch;
     std::cout << "Max Roll Moment: " << maxRoll << std::endl;
     std::cout << "Max Pitch Moment: " << maxPitch << std::endl;
