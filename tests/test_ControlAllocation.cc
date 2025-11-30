@@ -231,6 +231,19 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_Produ
     checkMomentsEqual(inputs, outputs);
 }
 
+TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_CloseDeadband_ProducesInBoundsOutputs)
+{
+    inputs[0] = 100.0;
+    inputs[1] = 101.0;
+    inputs[2] = 305.5;
+    inputs[3] = 300.0;
+
+    ca.allocateControls(inputs, outputs);
+
+    CHECK(isInBounds(outputs, kNumInputs, kMinT, kMaxT));
+    checkMomentsEqual(inputs, outputs);
+}
+
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargeSpread_TriggersScalingIntoRange)
 {
     inputs[0] = -100.0;
@@ -247,7 +260,7 @@ TEST_FIXTURE(ControlAllocationFixture, AllocateControls_LargeSpread_TriggersScal
 TEST_FIXTURE(ControlAllocationFixture, AllocateControls_WithValuesAboveMax_TriggersScaling)
 {   // edge case maxInput - minInput < _maxT - _minT
     inputs[0] = 30.0;
-    inputs[1] = 200.0;
+    inputs[1] = 31.0;
     inputs[2] = 305.0;
     inputs[3] = 300.0;
 

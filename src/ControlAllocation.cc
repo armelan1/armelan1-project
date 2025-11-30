@@ -2,6 +2,7 @@
 #include <cmath>
 
 // TODO check floating point tolerance issues.
+// TODO maybe keep this input as const double* and do a different method to round/floor to zero
 bool ControlAllocation::isInBounds(double* controlInputs) {
     for (int i = 0; i < _numberInputs; i++) {
         if (std::fabs(controlInputs[i]) < ROUNDING_TOLERANCE) {
