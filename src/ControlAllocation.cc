@@ -48,48 +48,14 @@ void ControlAllocation::allocateControls(double* controlInputs, double* controlO
         shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
         return;
     }
-    // check to see if we can shift the min to conserve thrust
-    if (isInBounds(controlInputs)) {
-        if (minInput < FLOATING_POINT_TOLERANCE) { // already in bounds and minInput is zero
-            shift(controlInputs, controlOutputs, Direction::COPY, 0.0); // copy inputs to outputs
-            return;
-        }
-        // try shifting minInput to zero
-        shift(controlInputs, controlOutputs, Direction::NEGATIVE, minInput);
-        if (isInBounds(controlOutputs)) {
-            return;
-        }
-        // try shifting minInput to minT
-        shift(controlInputs, controlOutputs, Direction::NEGATIVE, minInput - _minT);
-        if (isInBounds(controlOutputs)) {
-            return;
-        }
-    }
 
-    if (minInput < 0) {
-        shift(controlInputs, controlOutputs, Direction::POSITIVE, -minInput); // shift minInput up to zero
-        if (isInBounds(controlOutputs))
-            return;
-        shift(controlInputs, controlOutputs, Direction::POSITIVE, -(minInput - _minT)); // shift minInput up to minT
-        if (isInBounds(controlOutputs))
-            return;
-    }else if (maxInput > _maxT) {
-        shift(controlInputs, controlOutputs, Direction::NEGATIVE, maxInput - _maxT); // shift maxInput down to maxT
-        if (isInBounds(controlOutputs))
-            return;
-        shift(controlInputs, controlOutputs, Direction::NEGATIVE, (maxInput - _maxT) + (minInput - _minT)); // shift maxInput below maxT
-        if (isInBounds(controlOutputs))
-            return;
-    }else { // input in deadband
-        // reduce thrust
-        shift(controlInputs, controlOutputs, Direction::NEGATIVE, minInput); // shift minInput down to zero
-        if(isInBounds(controlOutputs))
-            return;
-        // increase thrust
-        shift(controlInputs, controlOutputs, Direction::POSITIVE, _minT - minInput); // shift minInput up to minT
-        if(isInBounds(controlOutputs))
-            return;
-    }
+    shift(controlInputs, controlOutputs, Direction::POSITIVE, -minInput); // shift minInput to zero
+    if (isInBounds(controlOutputs))
+        return;
+    shift(controlInputs, controlOutputs, Direction::POSITIVE, -(minInput - _minT)); // shift minInput to minT
+    if (isInBounds(controlOutputs))
+        return;
+
     // edge case maxInput - minInput > _maxT - _minT
     scale(controlInputs, controlOutputs, minInput, maxInput);
     shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
