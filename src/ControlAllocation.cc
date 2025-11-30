@@ -43,7 +43,7 @@ void ControlAllocation::allocateControls(double* controlInputs, double* controlO
     double maxInput = getMax(controlInputs);
     double minInput = getMin(controlInputs);
 
-    if ((maxInput - minInput) > _maxT) {  // (maxInput - minInput) < (_maxT - _minT) handled at end of function
+    if ((maxInput - minInput) > _maxT) {  // (maxInput - minInput) > (_maxT - _minT) handled at end of function
         scale(controlInputs, controlOutputs, minInput, maxInput);
         shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
         return;
@@ -90,7 +90,7 @@ void ControlAllocation::allocateControls(double* controlInputs, double* controlO
         if(isInBounds(controlOutputs))
             return;
     }
-    // edge case maxInput - minInput < _maxT - _minT
+    // edge case maxInput - minInput > _maxT - _minT
     scale(controlInputs, controlOutputs, minInput, maxInput);
     shiftAfterScale(controlOutputs); // try to shift after scaling to reduce thrust
 }
